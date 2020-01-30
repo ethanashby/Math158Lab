@@ -43,7 +43,7 @@ head(data1)
 Of course, in real life, we would never see the third column.  Let's check some pictures. 
 
 ```{r}
-histogram(~y, data=data1, breaks=25)
+histogram(~y, data=data1)
 xyplot(y~x, data=data1, type='p')
 ```
 
@@ -52,7 +52,9 @@ We can also make some non-linear data by transforming one or both of the variabl
 data1$x2 <- with(data1, exp(x))
 xyplot(y~x2, data=data1, type=c('r', 'p'))
 ```
+
 We can still fit a line to it! Heck, the correlation isn't even that bad.
+
 ```{r}
 cor(data1)
 ```
@@ -63,7 +65,7 @@ The above plotted the regression line, but let's fit the model and see what the 
 fit <- lm(y~x, data=data1)
 summary(fit)
 ```
-There's a bunch of stuff here, and we've only talked about a couple of them.  $r^2$, and the $\hat{beta_i}$ values (under Estimate).  Still work to do!
+There's a bunch of stuff here, and we've only talked about a couple of them.  $r^2$, and the $\hat{\beta_i}$ values (under Estimate). Still work to do!
 
 The assumption for our model can be regarded as assumptions about the $\epsilon$. The linearity assumption can be stated as: $\mu_{\epsilon|x}=0$.  The constant variance assumption is obviously: $\sigma^2_{\epsilon}=0$.  And the normality is: $\epsilon$ is distributed normally.  
 
@@ -75,11 +77,30 @@ head(data1)
 ```
 Think about how you might go about assessing these assumptions given these new variables.  
 
-Now try to fit and interpret a model for the data on sakai.  What would it mean for a linear model to be appropriate?  What about a curve with decreasing slope?  Increasing slope?  
+```{r}
+#Checking linear model assumptions
+#http://www.sthda.com/english/articles/39-regression-model-diagnostics/161-linear-regression-assumptions-and-diagnostics-in-r-essentials/
+#THIS IS A GREAT RESOURCE
+
+par(mfrow = c(2, 2))
+plot(fit)
+```
+A horizontal residuals vs fitted plot demonstrates a good linear relationship. The Normal Q-Q plot that follows a straight line shows that the residuals are normally distributed. Scale-Location plot with horizontal line indicates homoskedasticity.
+
+Now try to fit and interpret a model for the data on sakai.  What would it mean for a linear model to be appropriate? What about a curve with decreasing slope?  Increasing slope?  
 
 ```{r}
 labdata<-read.csv("Lab_1_Data.txt")
-View(labdata)
+summary(labdata)
+
+#some diagnostic plots
+histogram(~Time, data=labdata)
+xyplot(Time~Jobs, data=labdata, type=c('r', 'p'))
+#given some context, it shouldn't take us 7 minutes to do 0 jobs... can we do better?
+
+labdata$sj <- with(labdata, sqrt(Jobs))
+xyplot(Time~sj, data=labdata, type=c('r', 'p'))
+#the sqrt transformation on 'Jobs' improves the linear fit a lot better! Yay!
 ```
 
 
