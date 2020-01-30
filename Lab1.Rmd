@@ -1,0 +1,85 @@
+---
+title: "Lab 1"
+author: "Ethan Ashby"
+date: "1/30/2019"
+output: pdf_document
+---
+
+##Lab 1: Simple Linear Regression
+```{r, include=FALSE}
+require(mosaic)
+```
+Everything in the shaded regions above (called a 'chunk') is interpreted as R code.  You can run separate chunks by pushing the 'play' button.  We will use an R package called 'mosaic', which primarily makes functions doing standard descriptive statistics behave like statistical models in terms of syntax.  It is trying to get away from having to use the '$' very often.  
+
+Let's go ahead and generate some regression data that comes from exactly the model we have in mind, that is 
+$Y=\beta_0+\beta_1 x + \epsilon$
+In R, a function comprised of the letter 'r' and a distribution name (or part of one) generates a random sample from that distribution.  Let's let $x$ be random numbers between 0 and 10, with a sample size of $n=47$.
+
+```{r}
+n <- 47
+x <- runif(n, 0, 10)
+head(x)
+```
+
+Now let's create a response variable. First, I'll choose the parameters of the model:
+```{r}
+beta0 <- 2
+beta1 <- 3
+sigma <- 4
+```
+
+Now we can generate the data
+
+```{r}
+#generate normal error
+epsilon <- rnorm(n,0,4)
+
+#apply the model
+y <- beta0 + beta1 * x + epsilon
+data1 <- data.frame(x,y, epsilon)
+head(data1)
+```
+
+Of course, in real life, we would never see the third column.  Let's check some pictures. 
+
+```{r}
+histogram(~y, data=data1, breaks=25)
+xyplot(y~x, data=data1, type='p')
+```
+
+We can also make some non-linear data by transforming one or both of the variables.  We can add new variables to the data frame as such:
+```{r}
+data1$x2 <- with(data1, exp(x))
+xyplot(y~x2, data=data1, type=c('r', 'p'))
+```
+We can still fit a line to it! Heck, the correlation isn't even that bad.
+```{r}
+cor(data1)
+```
+We know what transformation would fix this.  log(x2)! In general, this is a much harder question. 
+
+The above plotted the regression line, but let's fit the model and see what the equation actually is. 
+```{r}
+fit <- lm(y~x, data=data1)
+summary(fit)
+```
+There's a bunch of stuff here, and we've only talked about a couple of them.  $r^2$, and the $\hat{beta_i}$ values (under Estimate).  Still work to do!
+
+The assumption for our model can be regarded as assumptions about the $\epsilon$. The linearity assumption can be stated as: $\mu_{\epsilon|x}=0$.  The constant variance assumption is obviously: $\sigma^2_{\epsilon}=0$.  And the normality is: $\epsilon$ is distributed normally.  
+
+Let's add the residuals to our data frame (our best guess as the errors), as well as the fitted values.
+```{r}
+data1$resid <- residuals(fit)
+data1$fitted <- fitted(fit)
+head(data1)
+```
+Think about how you might go about assessing these assumptions given these new variables.  
+
+Now try to fit and interpret a model for the data on sakai.  What would it mean for a linear model to be appropriate?  What about a curve with decreasing slope?  Increasing slope?  
+
+```{r}
+labdata<-read.csv("Lab_1_Data.txt")
+View(labdata)
+```
+
+
