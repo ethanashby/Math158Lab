@@ -1,0 +1,98 @@
+---
+title: "Principle Components Regression"
+author: "Student"
+date: "3/26/2020"
+output: pdf_document
+---
+
+One of the main problems we've found when trying to fit a regression model is that many of the predictor variables are correlated amongst themselves, so-called multicollinearity.  As a result, we needed to do a lot of extra work in hand picking our variables.  Rather than simply look at the original scatter plot matrix or a correlation matrix to identify good variables, we needed to successively add our most recent residuals to the data set and see which variables were capable of predicting this now remaining noise.  The answer to this question was often quite different from the first question of which variables were capable of predicting the original noise (or variation in y). 
+This problem would be a whole lot easier if the predictors were not heavily correlated.  Then you could probably trust those original summaries.  
+
+Heck, if we're playing pretend, I'll just request that my predictor variables are all orthogonal to each other, in other words the best fitting line relating any two $X$ variables would have a slope of identically 0.  
+
+Yes.  Life would indeed be grand. 
+
+We can actually live in this dream land.  Next question, do we want to? 
+
+Let's look at a (too?) familiar data set. mtcars.
+
+I'm going to remove the response variable and the categorical variables from the data set for illustrative purposes.
+```{r}
+data(mtcars)
+xs <- mtcars[,c(2,3,4,5,6,11)]
+summary(xs)
+cor(xs)
+plot(as.data.frame(xs))
+```
+
+You can see that there is a lot of shared information between these 6 variables. While the data certainly looks like it is a 6-dimensional point cloud, the reality is that it probably doesn't "fill" all 6 dimensions. What does that mean? 
+
+```{r}
+x <- 1:10 + rnorm(10,0,.1)
+y <- x + rnorm(10,0,.1)
+data.frame(x,y)
+```
+
+Look at this lovely data set of 10 observations. I've got 2 variables worth of information here.  Or do I. 
+
+```{r}
+plot(x,y)
+```
+
+My data doesn't actually really "fill" 2-space. It looks like a one-dimensional point cloud sort of placed haphazardly in 2-space.  If I were to rotate this space, I could get rid of one of the variables.
+How should I do that? 
+```{r}
+par(mar=c(5,4,4,15)+.1)
+plot(x,y)
+lines(c(5.5,8.5), c(5.5,8.5), col='green')
+lines(c(5.5,5.1), c(5.5,5.9), col='red')
+```
+
+The idea is to find the direction that has the most variablility (which is to say that if you were to project all the data onto a line passing through the middle of the point cloud and compute the variance of this now 1-$d$ data, which line would give you the highest variance/standard deviation).  In the above picture this is the green line. Rotate this line to the "x-axis".  
+
+The second axis will be the direction orthogonal to the first that has the highest variability, and so forth.  Since this data is only 2-dimensional, this is trivially the red line. 
+
+What you get back is a collection of new variables that are all orthogonal to each other.  What is typically done at this point is to throw away the later variables, as they have very little variability.  
+
+This is known as principle component analysis (PCA).  Mathematically, this idea of finding directions are rotating accordingly is a eigen-decomposition of the covariance matrix.  
+
+Fitting a regression model based on these principle components, for the reasons stated at the beginning, is called principle component regression (PCR).  
+
+Let's try it. First, I'll $z$-scale the variables in mtcars to have unit variance (otherwise, this is non-sense). 
+```{r}
+xs.z <- apply (xs, 2, scale)
+pca <- princomp(xs.z)
+plot(pca)
+```
+
+We can see that there is very little variability after the first two components.  We can't visualize 6-space, but if we could, the point cloud would look like a piece of paper sitting in 6-space.  There's really only two variables worth of information. 89% of the variability in the predictors is explained with just two variables. 
+
+Let's see what they are. Here are the linear combinations (note: these are unit vectors).
+```{r}
+pca$loadings[,1:2]
+```
+
+Let's see the scatter plot matrix of these new variables.
+```{r}
+plot(as.data.frame(pca$scores))
+round(cor(pca$scores), 5)  #round to the nearest .00001
+```
+
+Let's do what people do (which is especially helpful if $p>n$, where running a regression would return an $R^2=1$ with certainty) and throw away all but the first two variables (as suggested by the plot we saw earlier).  Remember, we liked a 2 variable model. 
+
+```{r}
+fit <- lm(log(mtcars$mpg) ~ pca$scores[,1] + pca$scores[,2])
+summary(fit)
+```
+
+I've got an $R^2$ of .86!  This is better than the $R^2$ we saw with two variables before.  So this is better, right? Right?  
+
+I get a $\hat{\beta}_1=-.133$, so I would expect the log(mpg) to go down by 0.133 for a unit change in $X_1$ which was, oh no.  $X_1=.46(Cyl)+.46(Disp)+.43(HP)-.35(DRAT)+.43(WT)+.29(CARB)$
+I'm not interpreting that.  
+
+This is the "principle problem with principle components regression."  You end up what looks like an intrepretable model on the surface, but even a one variable model is really an all variable model since all of your new variables are linear combinations of all of your original variables.  
+
+
+Note:  "Principle problem with principle components regression" is the title of a paper published by Prof Smith and my former student Heidi Artigue '19.  They devise a data generation scheme that confuses PCR and consequentially the results are very bad.  It's available on-line.  I don't know any Econ, but I can't imagine real world data looking like their simulation scheme.  Interpretability is really the principle problem.  
+
+If $p>n$ (more predictor variables than observations, so linear combinations of your $p$ predictors give you access to $n$-space, where $y$ lives, and you can make SSE=0), use LASSO.  
