@@ -87,7 +87,7 @@ What is the average fuel efficiency of a hybrid:  $L=\mu_1$
 
 In general, we are interested in what we will call linear combinations.  
 
-$L=\sum c_i \mu_i$ estimated by $\hat{L}=\sum c_i \bar{y}_i$
+$L=\sum c_i \mu_i$ estimated by $\hat{L}=\sum \frac{c_i^2 \sigma^2}{n_i}$
 
 If $\sum c_i=0$, we call it a contrast (hence the C notation above). 
 
@@ -95,7 +95,7 @@ If it is such that all the $c_i$ are zero except one which is 1 and the other is
 
 Tukey gives a way to nicely control the family error rate for all pairwise differences.
 
-There is a technique called Scheffe's method, that works for all contrasts (all infinitely many of them!). It suffices to know that this exists.  We won't get into it.  
+There is a technique called Scheffe's method, that works for all contrasts (all infinitely many of them!). It suffices to know that this exists.  We won't get into it.
 
 If you want linear combinations, you have to use Bonferroni.  
 
@@ -103,13 +103,33 @@ If you want linear combinations, you have to use Bonferroni.
 
 1. Are these classes of linear combinations nested?  Put them in order from smallest to largest. 
 
+All pairwise differences are contrasts. All contrasts are linear combinations.
+
+Pairwise comparisons.
+Contrasts.
+Linear Combinations.
+
+
 2. Use the formula for variances of linear combinations above to find (a) the variance of a general linear combination, and (b) the contrast considered in the example above (that isn't the pairwise difference). 
+
+(a) $$Var(\sum c_i \bar{y}_i)=\sum \frac{c_i^2 \sigma^2}{n_i}$$
+
+(b) Apply general linear combination framework to contrasts: $Var(\sum c_i \bar{y}_i)=\sum \frac{c_i^2 \sigma^2}{n_i}$ with $c_1=0.5, c_2=0.5, c_3=-1$.
 
 3. Supose that I was interested in the specific 3 linear combinations above, only.  What is the value of $\alpha$ that I should use to control the family wise error rate at .05?
 
+Bonferroni says divide $\alpha$ by k=3, so our $\alpha=0.05/3$.
+
 4.  Find the t-multiplier (using qt(prob, df)) I would use if I had 100 total cars.  Note: the df is how much data I had to estimate the unknown $\sigma^2$.
 
+```{r}
+qt(0.95, 97)
+```
+100-3 df because we need to estimate 3 means and we have 100 total data points.
+
 5.  If all I was interested in was pairwise differences, which do you think would give me smaller intervals, Tukey's method or Scheffe's?
+
+Tukey's method, as it is designed for pairwise differences.
 
 6.  Here's data that looks at the length of rehab required for corrective knee surgery as a function of physical fitness level at time of surgery
 
